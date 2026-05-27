@@ -1,0 +1,26 @@
+digraph Matriz5 {
+  rankdir=LR;
+  label="Matriz Dispersa - Capa 5";
+  node [shape=record];
+  raiz [label="raiz" shape=ellipse];
+  hf1 [label="fila 1" shape=box style=filled fillcolor=lightblue];
+  hf2 [label="fila 2" shape=box style=filled fillcolor=lightblue];
+  hc4 [label="col 4" shape=box style=filled fillcolor=lightyellow];
+  hc5 [label="col 5" shape=box style=filled fillcolor=lightyellow];
+  n1_4 [label="(1,4)\n#FF6600" style=filled fillcolor="#FF6600"];
+  n1_5 [label="(1,5)\n#FF6600" style=filled fillcolor="#FF6600"];
+  n2_4 [label="(2,4)\n#FF6600" style=filled fillcolor="#FF6600"];
+  n2_5 [label="(2,5)\n#FF6600" style=filled fillcolor="#FF6600"];
+  raiz -> hf1;
+  hf1 -> hf2;
+  raiz -> hc4;
+  hc4 -> hc5;
+  hf1 -> n1_4 [label="sigFila"];
+  n1_4 -> n1_5 [label="sigFila"];
+  hf2 -> n2_4 [label="sigFila"];
+  n2_4 -> n2_5 [label="sigFila"];
+  hc4 -> n1_4 [label="sigCol" color=red];
+  n1_4 -> n2_4 [label="sigCol" color=red];
+  hc5 -> n1_5 [label="sigCol" color=red];
+  n1_5 -> n2_5 [label="sigCol" color=red];
+}

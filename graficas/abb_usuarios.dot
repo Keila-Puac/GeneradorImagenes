@@ -1,0 +1,26 @@
+digraph ABBUsuarios {
+  label="Árbol Binario de Búsqueda - Usuarios";
+  u_userM [label="userM" shape=box style=filled fillcolor=lightblue];
+  u_userM -> u_userB [label="izq"];
+  u_userB [label="userB" shape=box style=filled fillcolor=lightblue];
+  u_userB -> u_userA [label="izq"];
+  u_userA [label="userA" shape=box style=filled fillcolor=lightblue];
+  u_userA_i0 [label="img 1" shape=ellipse style=filled fillcolor=lightyellow];
+  u_userA -> u_userA_i0 [color=green];
+  u_userA_i1 [label="img 2" shape=ellipse style=filled fillcolor=lightyellow];
+  u_userA_i0 -> u_userA_i1 [color=green];
+  u_userA -> u_Maria [label="izq"];
+  u_Maria [label="Maria" shape=box style=filled fillcolor=lightblue];
+  u_Maria_i0 [label="img 2" shape=ellipse style=filled fillcolor=lightyellow];
+  u_Maria -> u_Maria_i0 [color=green];
+  u_Maria_i1 [label="img 4" shape=ellipse style=filled fillcolor=lightyellow];
+  u_Maria_i0 -> u_Maria_i1 [color=green];
+  u_userM -> u_userY [label="der"];
+  u_userY [label="userY" shape=box style=filled fillcolor=lightblue];
+  u_userY_i0 [label="img 5" shape=ellipse style=filled fillcolor=lightyellow];
+  u_userY -> u_userY_i0 [color=green];
+  u_userY -> u_userZ [label="der"];
+  u_userZ [label="userZ" shape=box style=filled fillcolor=lightblue];
+  u_userZ_i0 [label="img 3" shape=ellipse style=filled fillcolor=lightyellow];
+  u_userZ -> u_userZ_i0 [color=green];
+}

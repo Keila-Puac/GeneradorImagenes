@@ -1,0 +1,12 @@
+digraph ABBCapas {
+  label="Árbol Binario de Búsqueda - Capas";
+  c1 [label="capa_1" shape=box];
+  c1 -> c2 [label="der"];
+  c2 [label="capa_2" shape=box];
+  c2 -> c3 [label="der"];
+  c3 [label="capa_3" shape=box];
+  c3 -> c4 [label="der"];
+  c4 [label="capa_4" shape=box];
+  c4 -> c5 [label="der"];
+  c5 [label="capa_5" shape=box];
+}
