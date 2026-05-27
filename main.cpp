@@ -1,5 +1,6 @@
 // ============================================================
 // GENERADOR DE IMÁGENES POR CAPAS
+// Estructura de Datos I 2026 - URL Quetzaltenango
 // ============================================================
 #include <iostream>
 #include <fstream>
@@ -150,85 +151,116 @@ public:
         }
     }
 
-    // Graficar estructura de la matriz (dot)
+    // Graficar estructura de la matriz (dot) - estilo mejorado
     void graficarEstructura(const string& sufijo) const {
-        string dotPath  = "graficas/mat_" + sufijo + ".dot";
-        string pngPath  = "graficas/mat_" + sufijo + ".png";
+        string dotPath = "graficas/mat_" + sufijo + ".dot";
+        string pngPath = "graficas/mat_" + sufijo + ".png";
         ofstream dot(dotPath.c_str());
+
         dot << "digraph Matriz" << idCapa << " {\n";
-        dot << "  rankdir=LR;\n";
-        dot << "  label=\"Matriz Dispersa - Capa " << idCapa << "\";\n";
-        dot << "  node [shape=record];\n";
+        dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6 splines=ortho rankdir=LR\n";
+        dot << "         label=\"Matriz Dispersa  |  Capa " << idCapa << "\"\n";
+        dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
+        dot << "  node [fontname=\"Helvetica\" fontsize=11];\n";
+        dot << "  edge [fontname=\"Helvetica\" fontsize=9];\n\n";
 
         // Nodo raiz
-        dot << "  raiz [label=\"raiz\" shape=ellipse];\n";
+        dot << "  raiz [label=\"MATRIZ\\nraiz\" shape=ellipse style=filled\n";
+        dot << "        fillcolor=\"#313244\" fontcolor=\"#cdd6f4\" color=\"#89b4fa\" penwidth=2];\n\n";
 
         // Encabezados de filas
+        dot << "  subgraph cluster_filas {\n";
+        dot << "    label=\"Encab. Filas\" fontcolor=\"#89dceb\" color=\"#89dceb\" style=dashed bgcolor=\"#181825\";\n";
         CabFila* cf = filas;
         while (cf) {
-            dot << "  hf" << cf->fila << " [label=\"fila " << cf->fila << "\" shape=box style=filled fillcolor=lightblue];\n";
+            dot << "    hf" << cf->fila
+                << " [label=\"fila " << cf->fila << "\" shape=box style=filled"
+                << " fillcolor=\"#1e66f5\" fontcolor=\"white\" color=\"#89b4fa\" penwidth=1.5];\n";
             cf = cf->sig;
         }
-        // Encabezados de cols
+        dot << "  }\n\n";
+
+        // Encabezados de columnas
+        dot << "  subgraph cluster_cols {\n";
+        dot << "    label=\"Encab. Cols\" fontcolor=\"#f9e2af\" color=\"#f9e2af\" style=dashed bgcolor=\"#181825\";\n";
         CabCol* cc = cols;
         while (cc) {
-            dot << "  hc" << cc->col << " [label=\"col " << cc->col << "\" shape=box style=filled fillcolor=lightyellow];\n";
+            dot << "    hc" << cc->col
+                << " [label=\"col " << cc->col << "\" shape=box style=filled"
+                << " fillcolor=\"#df8e1d\" fontcolor=\"white\" color=\"#f9e2af\" penwidth=1.5];\n";
             cc = cc->sig;
         }
+        dot << "  }\n\n";
+
         // Nodos pixel
+        dot << "  // Nodos Pixel\n";
         cf = filas;
         while (cf) {
             NodoPixel* p = cf->primero;
             while (p) {
-                string id = "n" + to_string(p->fila) + "_" + to_string(p->col);
-                dot << "  " << id << " [label=\"(" << p->fila << "," << p->col << ")\\n" << p->color
-                    << "\" style=filled fillcolor=\"" << p->color << "\"];\n";
+                string nid = "n" + to_string(p->fila) + "_" + to_string(p->col);
+                dot << "  " << nid
+                    << " [label=\"(" << p->fila << "," << p->col << ")\\n" << p->color << "\""
+                    << " shape=box style=\"filled,rounded\""
+                    << " fillcolor=\"" << p->color << "\""
+                    << " fontcolor=\"#000000\" color=\"#cdd6f4\" penwidth=1.5];\n";
                 p = p->sigFila;
             }
             cf = cf->sig;
         }
-        // Conexión raíz -> primer encabezado fila
-        if (filas) dot << "  raiz -> hf" << filas->fila << ";\n";
-        // Conexión entre encabezados fila
+
+        // Conexiones raiz
+        dot << "\n";
+        if (filas) dot << "  raiz -> hf" << filas->fila
+                       << " [color=\"#89b4fa\" penwidth=2 label=\"  filas\" fontcolor=\"#89b4fa\"];\n";
+        if (cols)  dot << "  raiz -> hc" << cols->col
+                       << " [color=\"#f9e2af\" penwidth=2 label=\"  cols\" fontcolor=\"#f9e2af\"];\n";
+
+        // Cadena encabezados fila
         cf = filas;
         while (cf && cf->sig) {
-            dot << "  hf" << cf->fila << " -> hf" << cf->sig->fila << ";\n";
+            dot << "  hf" << cf->fila << " -> hf" << cf->sig->fila
+                << " [color=\"#89b4fa\" style=dashed arrowsize=0.7];\n";
             cf = cf->sig;
         }
-        // Conexión raíz -> primer encabezado col
-        if (cols) dot << "  raiz -> hc" << cols->col << ";\n";
-        // Conexión entre encabezados col
+        // Cadena encabezados col
         cc = cols;
         while (cc && cc->sig) {
-            dot << "  hc" << cc->col << " -> hc" << cc->sig->col << ";\n";
+            dot << "  hc" << cc->col << " -> hc" << cc->sig->col
+                << " [color=\"#f9e2af\" style=dashed arrowsize=0.7];\n";
             cc = cc->sig;
         }
-        // Conexiones fila -> pixel
+
+        // sigFila (azul claro)
         cf = filas;
         while (cf) {
-            NodoPixel* p = cf->primero;
             string prev = "hf" + to_string(cf->fila);
+            NodoPixel* p = cf->primero;
             while (p) {
-                string id = "n" + to_string(p->fila) + "_" + to_string(p->col);
-                dot << "  " << prev << " -> " << id << " [label=\"sigFila\"];\n";
-                prev = id;
+                string nid = "n" + to_string(p->fila) + "_" + to_string(p->col);
+                dot << "  " << prev << " -> " << nid
+                    << " [color=\"#89b4fa\" label=\"sigFila\" fontcolor=\"#89b4fa\" fontsize=8];\n";
+                prev = nid;
                 p = p->sigFila;
             }
             cf = cf->sig;
         }
-        // Conexiones col -> pixel
+
+        // sigCol (naranja)
         cc = cols;
         while (cc) {
-            NodoPixel* p = cc->primero;
             string prev = "hc" + to_string(cc->col);
+            NodoPixel* p = cc->primero;
             while (p) {
-                string id = "n" + to_string(p->fila) + "_" + to_string(p->col);
-                dot << "  " << prev << " -> " << id << " [label=\"sigCol\" color=red];\n";
-                prev = id;
+                string nid = "n" + to_string(p->fila) + "_" + to_string(p->col);
+                dot << "  " << prev << " -> " << nid
+                    << " [color=\"#fab387\" label=\"sigCol\" fontcolor=\"#fab387\" fontsize=8];\n";
+                prev = nid;
                 p = p->sigCol;
             }
             cc = cc->sig;
         }
+
         dot << "}\n";
         dot.close();
         correrDot(dotPath, pngPath);
@@ -338,21 +370,45 @@ public:
     vector<NodoCapa*> recorridoPreorden()  const { vector<NodoCapa*> v; preorden(raiz, v);   return v; }
     vector<NodoCapa*> recorridoPostorden() const { vector<NodoCapa*> v; postorden(raiz, v);  return v; }
 
-    // Graficar ABB
+    // Graficar ABB - estilo mejorado
     void graficarDot(NodoCapa* n, ofstream& dot) const {
         if (!n) return;
-        dot << "  c" << n->id << " [label=\"capa_" << n->id << "\" shape=box];\n";
-        if (n->izq) { dot << "  c" << n->id << " -> c" << n->izq->id << " [label=\"izq\"];\n"; graficarDot(n->izq, dot); }
-        if (n->der) { dot << "  c" << n->id << " -> c" << n->der->id << " [label=\"der\"];\n"; graficarDot(n->der, dot); }
+        string fill = "#45475a", border = "#89b4fa";
+        dot << "  c" << n->id
+            << " [label=\"capa " << n->id << "\""
+            << " shape=box style=\"filled,rounded\""
+            << " fillcolor=\"" << fill << "\" fontcolor=\"#cdd6f4\""
+            << " color=\"" << border << "\" penwidth=2];\n";
+        if (n->izq) {
+            dot << "  c" << n->id << " -> c" << n->izq->id
+                << " [label=\"izq\" color=\"#a6e3a1\" fontcolor=\"#a6e3a1\""
+                << " penwidth=1.8 fontsize=10];\n";
+            graficarDot(n->izq, dot);
+        }
+        if (n->der) {
+            dot << "  c" << n->id << " -> c" << n->der->id
+                << " [label=\"der\" color=\"#f38ba8\" fontcolor=\"#f38ba8\""
+                << " penwidth=1.8 fontsize=10];\n";
+            graficarDot(n->der, dot);
+        }
     }
 
     void graficar() const {
         string dotPath = "graficas/abb_capas.dot";
         string pngPath = "graficas/abb_capas.png";
         ofstream dot(dotPath.c_str());
-        dot << "digraph ABBCapas {\n  label=\"Árbol Binario de Búsqueda - Capas\";\n";
-        if (!raiz) { dot << "  vacio [label=\"(vacío)\"];\n"; }
-        else graficarDot(raiz, dot);
+        dot << "digraph ABBCapas {\n";
+        dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6\n";
+        dot << "         label=\"Arbol Binario de Busqueda  |  Capas\"\n";
+        dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
+        dot << "  node [fontname=\"Helvetica\" fontsize=12];\n";
+        dot << "  edge [fontname=\"Helvetica\" fontsize=10];\n\n";
+        if (!raiz) {
+            dot << "  vacio [label=\"(vacío)\" shape=ellipse style=filled"
+                << " fillcolor=\"#313244\" fontcolor=\"#6c7086\"];\n";
+        } else {
+            graficarDot(raiz, dot);
+        }
         dot << "}\n";
         dot.close();
         correrDot(dotPath, pngPath);
@@ -468,34 +524,73 @@ public:
         string dotPath = "graficas/lista_imagenes.dot";
         string pngPath = "graficas/lista_imagenes.png";
         ofstream dot(dotPath.c_str());
-        dot << "digraph ListaImagenes {\n  rankdir=LR;\n  label=\"Lista Circular Doblemente Enlazada - Imágenes\";\n";
-        if (!cabeza) { dot << "  vacio [label=\"(vacía)\"];\n"; dot << "}\n"; dot.close(); correrDot(dotPath, pngPath); return; }
+        dot << "digraph ListaImagenes {\n";
+        dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6 rankdir=LR\n";
+        dot << "         label=\"Lista Circular Doblemente Enlazada  |  Imagenes\"\n";
+        dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
+        dot << "  node [fontname=\"Helvetica\" fontsize=11];\n";
+        dot << "  edge [fontname=\"Helvetica\" fontsize=9];\n\n";
+
+        if (!cabeza) {
+            dot << "  vacio [label=\"(lista vacia)\" shape=ellipse style=filled"
+                << " fillcolor=\"#313244\" fontcolor=\"#6c7086\"];\n";
+            dot << "}\n"; dot.close(); correrDot(dotPath, pngPath); return;
+        }
+
+        // Nodos imagen
         NodoImagen* p = cabeza;
         do {
-            dot << "  img" << p->id << " [label=\"imagen " << p->id << "\" shape=box];\n";
+            dot << "  img" << p->id
+                << " [label=\"{ Imagen " << p->id << " | capas: ";
+            NodoListaCapa* c = p->capas.cabeza;
+            if (!c) dot << "ninguna";
+            while (c) { dot << c->ref->id; if (c->sig) dot << " → "; c = c->sig; }
+            dot << " }\" shape=record style=filled"
+                << " fillcolor=\"#313244\" fontcolor=\"#cdd6f4\""
+                << " color=\"#cba6f7\" penwidth=2];\n";
             p = p->sig;
         } while (p != cabeza);
+
+        // Flechas sig (verde) y ant (azul punteado)
         p = cabeza;
         do {
-            dot << "  img" << p->id << " -> img" << p->sig->id << " [label=\"sig\"];\n";
-            dot << "  img" << p->id << " -> img" << p->ant->id << " [label=\"ant\" style=dashed color=blue];\n";
-            // lista de capas
+            dot << "  img" << p->id << " -> img" << p->sig->id
+                << " [label=\"sig\" color=\"#a6e3a1\" fontcolor=\"#a6e3a1\" penwidth=1.8];\n";
+            dot << "  img" << p->id << " -> img" << p->ant->id
+                << " [label=\"ant\" color=\"#89b4fa\" fontcolor=\"#89b4fa\""
+                << " style=dashed penwidth=1.5];\n";
+
+            // Sublista de capas con referencias al ABB
             NodoListaCapa* c = p->capas.cabeza;
             int i = 0;
             while (c) {
-                dot << "  img" << p->id << "_c" << i << " [label=\"capa " << c->ref->id << "\" shape=ellipse style=filled fillcolor=lightyellow];\n";
-                if (i == 0) dot << "  img" << p->id << " -> img" << p->id << "_c0 [color=green];\n";
-                else dot << "  img" << p->id << "_c" << (i-1) << " -> img" << p->id << "_c" << i << " [color=green];\n";
-                // enlace al ABB
-                dot << "  img" << p->id << "_c" << i << " -> c" << c->ref->id << " [style=dashed color=red label=\"ref\"];\n";
+                string nid = "img" + to_string(p->id) + "_c" + to_string(i);
+                dot << "  " << nid
+                    << " [label=\"capa " << c->ref->id << "\""
+                    << " shape=ellipse style=filled"
+                    << " fillcolor=\"#45475a\" fontcolor=\"#f9e2af\""
+                    << " color=\"#f9e2af\" penwidth=1.5];\n";
+                if (i == 0)
+                    dot << "  img" << p->id << " -> " << nid
+                        << " [color=\"#f9e2af\" label=\"capas\" fontcolor=\"#f9e2af\"];\n";
+                else {
+                    string prev = "img" + to_string(p->id) + "_c" + to_string(i-1);
+                    dot << "  " << prev << " -> " << nid
+                        << " [color=\"#f9e2af\" arrowsize=0.7];\n";
+                }
+                // Referencia al nodo ABB
+                dot << "  " << nid << " -> c" << c->ref->id
+                    << " [style=dashed color=\"#f38ba8\" label=\"ref\""
+                    << " fontcolor=\"#f38ba8\" fontsize=8];\n";
                 c = c->sig; i++;
             }
             p = p->sig;
         } while (p != cabeza);
+
         dot << "}\n";
         dot.close();
         correrDot(dotPath, pngPath);
-        cout << "[OK] Lista de imágenes -> " << pngPath << endl;
+        cout << "[OK] Lista de imagenes -> " << pngPath << endl;
     }
 };
 
@@ -596,27 +691,43 @@ public:
 
     void graficarDot(NodoUsuario* n, ofstream& dot) const {
         if (!n) return;
-        dot << "  u_" << n->nombre << " [label=\"" << n->nombre << "\" shape=box style=filled fillcolor=lightblue];\n";
-        // lista imágenes
+        dot << "  u_" << n->nombre
+            << " [label=\"{ " << n->nombre << " | imgs: ";
         NodoListaImg* p = n->listaImagenes;
-        int i = 0;
-        while (p) {
-            dot << "  u_" << n->nombre << "_i" << i << " [label=\"img " << p->idImagen << "\" shape=ellipse style=filled fillcolor=lightyellow];\n";
-            if (i == 0) dot << "  u_" << n->nombre << " -> u_" << n->nombre << "_i0 [color=green];\n";
-            else dot << "  u_" << n->nombre << "_i" << (i-1) << " -> u_" << n->nombre << "_i" << i << " [color=green];\n";
-            p = p->sig; i++;
+        if (!p) dot << "ninguna";
+        while (p) { dot << p->idImagen; if (p->sig) dot << "→"; p = p->sig; }
+        dot << " }\" shape=record style=filled"
+            << " fillcolor=\"#313244\" fontcolor=\"#cdd6f4\""
+            << " color=\"#89dceb\" penwidth=2];\n";
+
+        if (n->izq) {
+            dot << "  u_" << n->nombre << " -> u_" << n->izq->nombre
+                << " [label=\"izq\" color=\"#a6e3a1\" fontcolor=\"#a6e3a1\" penwidth=1.8 fontsize=10];\n";
+            graficarDot(n->izq, dot);
         }
-        if (n->izq) { dot << "  u_" << n->nombre << " -> u_" << n->izq->nombre << " [label=\"izq\"];\n"; graficarDot(n->izq, dot); }
-        if (n->der) { dot << "  u_" << n->nombre << " -> u_" << n->der->nombre << " [label=\"der\"];\n"; graficarDot(n->der, dot); }
+        if (n->der) {
+            dot << "  u_" << n->nombre << " -> u_" << n->der->nombre
+                << " [label=\"der\" color=\"#f38ba8\" fontcolor=\"#f38ba8\" penwidth=1.8 fontsize=10];\n";
+            graficarDot(n->der, dot);
+        }
     }
 
     void graficar() const {
         string dotPath = "graficas/abb_usuarios.dot";
         string pngPath = "graficas/abb_usuarios.png";
         ofstream dot(dotPath.c_str());
-        dot << "digraph ABBUsuarios {\n  label=\"Árbol Binario de Búsqueda - Usuarios\";\n";
-        if (!raiz) dot << "  vacio [label=\"(vacío)\"];\n";
-        else graficarDot(raiz, dot);
+        dot << "digraph ABBUsuarios {\n";
+        dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6\n";
+        dot << "         label=\"Arbol Binario de Busqueda  |  Usuarios\"\n";
+        dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
+        dot << "  node [fontname=\"Helvetica\" fontsize=12];\n";
+        dot << "  edge [fontname=\"Helvetica\" fontsize=10];\n\n";
+        if (!raiz) {
+            dot << "  vacio [label=\"(vacío)\" shape=ellipse style=filled"
+                << " fillcolor=\"#313244\" fontcolor=\"#6c7086\"];\n";
+        } else {
+            graficarDot(raiz, dot);
+        }
         dot << "}\n";
         dot.close();
         correrDot(dotPath, pngPath);
@@ -673,39 +784,77 @@ void generarImagenCompuesta(const vector<NodoCapa*>& capas, const string& sufijo
     cout << "[OK] Imagen generada: " << pngPath << endl;
 }
 
-// Graficar imagen + árbol de capas con enlace (ilustración 7)
+// Graficar imagen + árbol de capas con enlace (ilustración 7) - estilo mejorado
 void graficarImagenYArbol(NodoImagen* img, const ArbolCapas& arbol) {
     string sufijo = "img_arbol_" + to_string(img->id);
     string dotPath = "graficas/" + sufijo + ".dot";
     string pngPath = "graficas/" + sufijo + ".png";
     ofstream dot(dotPath.c_str());
+
     dot << "digraph ImgArbol" << img->id << " {\n";
-    dot << "  label=\"Imagen " << img->id << " - Lista de Capas y ABB\";\n";
-    // nodo imagen
-    dot << "  img" << img->id << " [label=\"imagen " << img->id << "\" shape=box style=filled fillcolor=lightgreen];\n";
-    // lista de capas de la imagen
+    dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6\n";
+    dot << "         label=\"Imagen " << img->id << "  |  Lista de Capas y ABB\"\n";
+    dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
+    dot << "  node [fontname=\"Helvetica\" fontsize=11];\n";
+    dot << "  edge [fontname=\"Helvetica\" fontsize=9];\n\n";
+
+    // Nodo imagen
+    dot << "  img" << img->id
+        << " [label=\"Imagen " << img->id << "\""
+        << " shape=box style=\"filled,rounded\""
+        << " fillcolor=\"#40a02b\" fontcolor=\"white\""
+        << " color=\"#a6e3a1\" penwidth=2];\n\n";
+
+    // Lista de capas
     NodoListaCapa* p = img->capas.cabeza;
     int i = 0;
     while (p) {
-        dot << "  lc" << i << " [label=\"capa " << p->ref->id << "\" shape=ellipse style=filled fillcolor=lightyellow];\n";
-        if (i == 0) dot << "  img" << img->id << " -> lc0;\n";
-        else dot << "  lc" << (i-1) << " -> lc" << i << ";\n";
-        // enlace al ABB
-        dot << "  lc" << i << " -> c" << p->ref->id << " [style=dashed color=red label=\"ref\"];\n";
+        string nid = "lc" + to_string(i);
+        dot << "  " << nid
+            << " [label=\"capa " << p->ref->id << "\""
+            << " shape=ellipse style=filled"
+            << " fillcolor=\"#45475a\" fontcolor=\"#f9e2af\""
+            << " color=\"#f9e2af\" penwidth=1.5];\n";
+        if (i == 0)
+            dot << "  img" << img->id << " -> lc0"
+                << " [color=\"#f9e2af\" label=\"lista capas\" fontcolor=\"#f9e2af\" penwidth=2];\n";
+        else {
+            string prev = "lc" + to_string(i-1);
+            dot << "  " << prev << " -> " << nid
+                << " [color=\"#f9e2af\" arrowsize=0.8];\n";
+        }
+        // Referencia al ABB
+        dot << "  " << nid << " -> c" << p->ref->id
+            << " [style=dashed color=\"#f38ba8\" label=\"ref\""
+            << " fontcolor=\"#f38ba8\" penwidth=1.5];\n";
         p = p->sig; i++;
     }
+
     // ABB completo
     function<void(NodoCapa*)> dotArbol = [&](NodoCapa* n) {
         if (!n) return;
-        dot << "  c" << n->id << " [label=\"capa_" << n->id << "\" shape=box];\n";
-        if (n->izq) { dot << "  c" << n->id << " -> c" << n->izq->id << " [label=\"izq\"];\n"; dotArbol(n->izq); }
-        if (n->der) { dot << "  c" << n->id << " -> c" << n->der->id << " [label=\"der\"];\n"; dotArbol(n->der); }
+        dot << "  c" << n->id
+            << " [label=\"capa " << n->id << "\""
+            << " shape=box style=\"filled,rounded\""
+            << " fillcolor=\"#313244\" fontcolor=\"#cdd6f4\""
+            << " color=\"#89b4fa\" penwidth=2];\n";
+        if (n->izq) {
+            dot << "  c" << n->id << " -> c" << n->izq->id
+                << " [label=\"izq\" color=\"#a6e3a1\" fontcolor=\"#a6e3a1\" penwidth=1.5];\n";
+            dotArbol(n->izq);
+        }
+        if (n->der) {
+            dot << "  c" << n->id << " -> c" << n->der->id
+                << " [label=\"der\" color=\"#f38ba8\" fontcolor=\"#f38ba8\" penwidth=1.5];\n";
+            dotArbol(n->der);
+        }
     };
     dotArbol(arbol.raiz);
+
     dot << "}\n";
     dot.close();
     correrDot(dotPath, pngPath);
-    cout << "[OK] Imagen+Árbol -> " << pngPath << endl;
+    cout << "[OK] Imagen+Arbol -> " << pngPath << endl;
 }
 
 // ============================================================
