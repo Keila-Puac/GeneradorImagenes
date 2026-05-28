@@ -1,26 +1,33 @@
-digraph Matriz5 {
-  rankdir=LR;
-  label="Matriz Dispersa - Capa 5";
-  node [shape=record];
-  raiz [label="raiz" shape=ellipse];
-  hf1 [label="fila 1" shape=box style=filled fillcolor=lightblue];
-  hf2 [label="fila 2" shape=box style=filled fillcolor=lightblue];
-  hc4 [label="col 4" shape=box style=filled fillcolor=lightyellow];
-  hc5 [label="col 5" shape=box style=filled fillcolor=lightyellow];
-  n1_4 [label="(1,4)\n#FF6600" style=filled fillcolor="#FF6600"];
-  n1_5 [label="(1,5)\n#FF6600" style=filled fillcolor="#FF6600"];
-  n2_4 [label="(2,4)\n#FF6600" style=filled fillcolor="#FF6600"];
-  n2_5 [label="(2,5)\n#FF6600" style=filled fillcolor="#FF6600"];
-  raiz -> hf1;
-  hf1 -> hf2;
-  raiz -> hc4;
-  hc4 -> hc5;
-  hf1 -> n1_4 [label="sigFila"];
-  n1_4 -> n1_5 [label="sigFila"];
-  hf2 -> n2_4 [label="sigFila"];
-  n2_4 -> n2_5 [label="sigFila"];
-  hc4 -> n1_4 [label="sigCol" color=red];
-  n1_4 -> n2_4 [label="sigCol" color=red];
-  hc5 -> n1_5 [label="sigCol" color=red];
-  n1_5 -> n2_5 [label="sigCol" color=red];
+graph G {
+  graph [bgcolor=white pad=0.4
+         label="Matriz Dispersa - Capa 5"
+         labelloc=t fontsize=16 fontcolor=black fontname=Helvetica];
+  node  [fontname=Helvetica fontsize=11 fixedsize=true width=0.85 height=0.4];
+  edge  [fontname=Helvetica fontsize=9 color=black];
+
+  raiz [label="raiz" shape=ellipse style=filled fillcolor=lightgray fontcolor=black color=black penwidth=1.2 pos="-70,440!"];
+
+  hf1 [label="F1" shape=box style=filled fillcolor="#D0D0D0" fontcolor=black color=black penwidth=1 pos="20,230!"];
+  hf2 [label="F2" shape=box style=filled fillcolor="#D0D0D0" fontcolor=black color=black penwidth=1 pos="20,120!"];
+
+  hc4 [label="C4" shape=box style=filled fillcolor="#D0D0D0" fontcolor=black color=black penwidth=1 pos="120,440!"];
+  hc5 [label="C5" shape=box style=filled fillcolor="#D0D0D0" fontcolor=black color=black penwidth=1 pos="230,440!"];
+
+  n1_4 [label="#FF6600" shape=box style=filled fillcolor="#FF6600" fontcolor=white color=black penwidth=1 pos="120,230!"];
+  n1_5 [label="#FF6600" shape=box style=filled fillcolor="#FF6600" fontcolor=white color=black penwidth=1 pos="230,230!"];
+  n2_4 [label="#FF6600" shape=box style=filled fillcolor="#FF6600" fontcolor=white color=black penwidth=1 pos="120,120!"];
+  n2_5 [label="#FF6600" shape=box style=filled fillcolor="#FF6600" fontcolor=white color=black penwidth=1 pos="230,120!"];
+
+  raiz -- hf1 [color=black];
+  raiz -- hc4 [color=black];
+  hf1 -- hf2 [style=dashed color=gray];
+  hc4 -- hc5 [style=dashed color=gray];
+  hf1 -- n1_4 [color=black];
+  n1_4 -- n1_5 [color=black];
+  hf2 -- n2_4 [color=black];
+  n2_4 -- n2_5 [color=black];
+  hc4 -- n1_4 [color=gray style=dashed];
+  n1_4 -- n2_4 [color=gray style=dashed];
+  hc5 -- n1_5 [color=gray style=dashed];
+  n1_5 -- n2_5 [color=gray style=dashed];
 }
