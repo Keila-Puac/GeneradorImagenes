@@ -8,9 +8,9 @@
 #include <string>
 #include <sstream>
 #include <climits>
- 
+
 #include <functional>
- 
+
 #ifdef _WIN32
   #include <direct.h>
   #include <windows.h>
@@ -19,9 +19,9 @@
   #include <sys/stat.h>
   #define MKDIR(p) mkdir(p, 0755)
 #endif
- 
+
 using namespace std;
- 
+
 // ============================================================
 // UTILIDADES
 // ============================================================
@@ -31,7 +31,7 @@ string trim(const string& s) {
     size_t b = s.find_last_not_of(" \t\n\r");
     return s.substr(a, b - a + 1);
 }
- 
+
 vector<string> split(const string& s, char delim) {
     vector<string> v;
     stringstream ss(s);
@@ -39,17 +39,17 @@ vector<string> split(const string& s, char delim) {
     while (getline(ss, tok, delim)) v.push_back(trim(tok));
     return v;
 }
- 
+
 void crearDirs() {
     MKDIR("datos");
     MKDIR("graficas");
 }
- 
+
 void correrDot(const string& dotFile, const string& pngFile) {
     string cmd = "dot -Tpng \"" + dotFile + "\" -o \"" + pngFile + "\"";
     system(cmd.c_str());
 }
- 
+
 // ============================================================
 // MATRIZ DISPERSA (lista enlazada 2D de píxeles)
 // ============================================================
@@ -61,32 +61,32 @@ struct NodoPixel {
     NodoPixel(int f, int c, const string& col)
         : fila(f), col(c), color(col), sigFila(nullptr), sigCol(nullptr) {}
 };
- 
+
 struct CabFila {
     int fila;
     NodoPixel* primero;
     CabFila* sig;
     CabFila(int f) : fila(f), primero(nullptr), sig(nullptr) {}
 };
- 
+
 struct CabCol {
     int col;
     NodoPixel* primero;
     CabCol* sig;
     CabCol(int c) : col(c), primero(nullptr), sig(nullptr) {}
 };
- 
+
 class MatrizDispersa {
 public:
     CabFila* filas;
     CabCol*  cols;
     int      idCapa;
- 
+
     MatrizDispersa(int id) : filas(nullptr), cols(nullptr), idCapa(id) {}
- 
+
     void insertar(int f, int c, const string& color) {
         NodoPixel* nodo = new NodoPixel(f, c, color);
- 
+
         // --- encabezado fila ---
         CabFila* cf = filas;
         CabFila* cfPrev = nullptr;
@@ -103,7 +103,7 @@ public:
         while (pc && pc->col < c) { pp = pc; pc = pc->sigFila; }
         nodo->sigFila = pc;
         if (pp) pp->sigFila = nodo; else cf->primero = nodo;
- 
+
         // --- encabezado col ---
         CabCol* cc = cols;
         CabCol* ccPrev = nullptr;
@@ -121,7 +121,7 @@ public:
         nodo->sigCol = qc;
         if (qp) qp->sigCol = nodo; else cc->primero = nodo;
     }
- 
+
     // Buscar color en (f,c); retorna "" si no existe
     string getColor(int f, int c) const {
         CabFila* cf = filas;
@@ -132,7 +132,7 @@ public:
         if (!p || p->col != c) return "";
         return p->color;
     }
- 
+
     // Dimensiones reales
     void bounds(int& minF, int& maxF, int& minC, int& maxC) const {
         minF = INT_MAX; maxF = INT_MIN;
@@ -150,16 +150,15 @@ public:
             cf = cf->sig;
         }
     }
- 
-    // Graficar estructura de la matriz con neato + posiciones fijas
-    // La cuadricula queda limpia: col encabezados arriba, fila encabezados a la izquierda
+
+    // Graficar estructura de la matriz - blanco, minimalista, cuadricula exacta
     void graficarEstructura(const string& sufijo) const {
         if (!filas) { cout << "Capa " << idCapa << " vacia, nada que graficar." << endl; return; }
- 
+
         string dotPath = "graficas/mat_" + sufijo + ".dot";
         string pngPath = "graficas/mat_" + sufijo + ".png";
         ofstream dot(dotPath.c_str());
- 
+
         // --- Recopilar filas y columnas distintas en orden ---
         vector<int> vFilas, vCols;
         {
@@ -168,7 +167,7 @@ public:
             CabCol*  cc = cols;
             while (cc) { vCols.push_back(cc->col);   cc = cc->sig; }
         }
- 
+
         // Mapas: valor real -> índice de posición en la cuadrícula
         // Usamos vector<pair> para mantener orden
         auto idxFila = [&](int f) -> int {
@@ -179,69 +178,65 @@ public:
             for (int i = 0; i < (int)vCols.size(); i++) if (vCols[i] == c) return i;
             return 0;
         };
- 
+
         // Espaciado en puntos (1 pt = 1/72 inch para neato)
         const int PASO  = 110;   // distancia entre nodos (pt)
         const int ORIG_X = 120;  // margen izquierdo para nodos pixel
         const int ORIG_Y = 120;  // margen superior  para nodos pixel
         const int HDR_SZ = 80;   // offset para encabezados
- 
+
         // Posicion de un nodo pixel (col->X, fila->Y invertido para que fila 0 quede arriba)
         auto posX = [&](int col_idx) -> int { return ORIG_X + col_idx * PASO; };
         auto posY = [&](int fil_idx) -> int { return ORIG_Y + fil_idx * PASO; };
         // neato usa Y creciente hacia arriba, así que invertimos
         int maxFIdx = (int)vFilas.size() - 1;
         auto posYn  = [&](int fil_idx) -> int { return posY(maxFIdx - fil_idx); };
- 
+
         // Posicion de encabezado de fila (a la izquierda de su fila)
         auto hfX = [&]() -> int { return ORIG_X - HDR_SZ - 20; };
         auto hfY = [&](int fil_idx) -> int { return posYn(fil_idx); };
- 
+
         // Posicion de encabezado de col (arriba de su columna)
         auto hcX = [&](int col_idx) -> int { return posX(col_idx); };
         auto hcY = [&]() -> int { return posYn(-1) + HDR_SZ + 20; }; // una fila arriba del tope
- 
+
         // Posicion del nodo raiz (esquina superior izquierda)
         int raizX = hfX() - HDR_SZ - 10;
         int raizY = hcY();
- 
+
         dot << "graph G {\n";
-        dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.5\n";
-        dot << "         label=\"Matriz Dispersa  |  Capa " << idCapa << "\"\n";
-        dot << "         labelloc=t fontsize=22 fontcolor=\"#cdd6f4\""
-               " fontname=\"Helvetica-Bold\"];\n";
-        dot << "  node [fontname=\"Helvetica\" fontsize=11 width=0.9 height=0.45 fixedsize=true];\n";
-        dot << "  edge [fontname=\"Helvetica\" fontsize=9];\n\n";
- 
-        // --- Nodo raíz ---
+        dot << "  graph [bgcolor=white pad=0.4\n";
+        dot << "         label=\"Matriz Dispersa - Capa " << idCapa << "\"\n";
+        dot << "         labelloc=t fontsize=16 fontcolor=black fontname=Helvetica];\n";
+        dot << "  node  [fontname=Helvetica fontsize=11 fixedsize=true width=0.85 height=0.4];\n";
+        dot << "  edge  [fontname=Helvetica fontsize=9 color=black];\n\n";
+
+        // --- Nodo raiz ---
         dot << "  raiz [label=\"raiz\" shape=ellipse style=filled"
-            << " fillcolor=\"#313244\" fontcolor=\"#cdd6f4\""
-            << " color=\"#cdd6f4\" penwidth=2"
+            << " fillcolor=lightgray fontcolor=black color=black penwidth=1.2"
             << " pos=\"" << raizX << "," << raizY << "!\"];\n\n";
- 
-        // --- Encabezados de fila (columna izquierda) ---
+
+        // --- Encabezados de fila (columna izquierda, gris claro) ---
         for (int fi = 0; fi < (int)vFilas.size(); fi++) {
             int f = vFilas[fi];
             dot << "  hf" << f
-                << " [label=\"fila " << f << "\" shape=box style=filled"
-                << " fillcolor=\"#1e66f5\" fontcolor=\"white\""
-                << " color=\"#89b4fa\" penwidth=2"
+                << " [label=\"F" << f << "\" shape=box style=filled"
+                << " fillcolor=\"#D0D0D0\" fontcolor=black color=black penwidth=1"
                 << " pos=\"" << hfX() << "," << hfY(fi) << "!\"];\n";
         }
         dot << "\n";
- 
-        // --- Encabezados de col (fila superior) ---
+
+        // --- Encabezados de col (fila superior, gris claro) ---
         for (int ci = 0; ci < (int)vCols.size(); ci++) {
             int c = vCols[ci];
             dot << "  hc" << c
-                << " [label=\"col " << c << "\" shape=box style=filled"
-                << " fillcolor=\"#df8e1d\" fontcolor=\"white\""
-                << " color=\"#f9e2af\" penwidth=2"
+                << " [label=\"C" << c << "\" shape=box style=filled"
+                << " fillcolor=\"#D0D0D0\" fontcolor=black color=black penwidth=1"
                 << " pos=\"" << hcX(ci) << "," << hcY() << "!\"];\n";
         }
         dot << "\n";
- 
-        // --- Nodos pixel en su posición de cuadrícula ---
+
+        // --- Nodos pixel en su posicion de cuadricula ---
         {
             CabFila* cf = filas;
             while (cf) {
@@ -251,11 +246,10 @@ public:
                     int fi = idxFila(p->fila);
                     int ci = idxCol(p->col);
                     dot << "  " << nid
-                        << " [label=\"(" << p->fila << "," << p->col << ")\\n" << p->color << "\""
-                        << " shape=box style=\"filled,rounded\""
+                        << " [label=\"" << p->color << "\""
+                        << " shape=box style=filled"
                         << " fillcolor=\"" << p->color << "\""
-                        << " fontcolor=\"#ffffff\""
-                        << " color=\"#cdd6f4\" penwidth=1.5"
+                        << " fontcolor=white color=black penwidth=1"
                         << " pos=\"" << posX(ci) << "," << posYn(fi) << "!\"];\n";
                     p = p->sigFila;
                 }
@@ -263,26 +257,24 @@ public:
             }
         }
         dot << "\n";
- 
-        // --- Aristas: raíz -> primer encabezado fila y col ---
+
+        // --- Aristas raiz -> primer encabezado ---
         if (!vFilas.empty())
-            dot << "  raiz -- hf" << vFilas[0]
-                << " [color=\"#89b4fa\" penwidth=2 label=\"filas\" fontcolor=\"#89b4fa\"];\n";
+            dot << "  raiz -- hf" << vFilas[0] << " [color=black];\n";
         if (!vCols.empty())
-            dot << "  raiz -- hc" << vCols[0]
-                << " [color=\"#f9e2af\" penwidth=2 label=\"cols\" fontcolor=\"#f9e2af\"];\n";
- 
-        // Cadena encabezados fila (vertical, azul punteado)
+            dot << "  raiz -- hc" << vCols[0] << " [color=black];\n";
+
+        // Cadena encabezados fila (vertical, punteado)
         for (int fi = 0; fi + 1 < (int)vFilas.size(); fi++)
             dot << "  hf" << vFilas[fi] << " -- hf" << vFilas[fi+1]
-                << " [color=\"#89b4fa\" style=dashed];\n";
- 
-        // Cadena encabezados col (horizontal, amarillo punteado)
+                << " [style=dashed color=gray];\n";
+
+        // Cadena encabezados col (horizontal, punteado)
         for (int ci = 0; ci + 1 < (int)vCols.size(); ci++)
             dot << "  hc" << vCols[ci] << " -- hc" << vCols[ci+1]
-                << " [color=\"#f9e2af\" style=dashed];\n";
- 
-        // sigFila: encabezado fila -> primer pixel -> siguiente pixel (horizontal, azul)
+                << " [style=dashed color=gray];\n";
+
+        // sigFila: hdr fila -> pixel -> pixel (horizontal, negro solido)
         {
             CabFila* cf = filas;
             while (cf) {
@@ -290,17 +282,15 @@ public:
                 NodoPixel* p = cf->primero;
                 while (p) {
                     string nid = "n" + to_string(p->fila) + "_" + to_string(p->col);
-                    dot << "  " << prev << " -- " << nid
-                        << " [color=\"#89b4fa\" penwidth=1.8"
-                        << " label=\"→\" fontcolor=\"#89b4fa\" fontsize=10];\n";
+                    dot << "  " << prev << " -- " << nid << " [color=black];\n";
                     prev = nid;
                     p = p->sigFila;
                 }
                 cf = cf->sig;
             }
         }
- 
-        // sigCol: encabezado col -> primer pixel -> siguiente pixel (vertical, naranja)
+
+        // sigCol: hdr col -> pixel -> pixel (vertical, gris)
         {
             CabCol* cc = cols;
             while (cc) {
@@ -308,45 +298,43 @@ public:
                 NodoPixel* p = cc->primero;
                 while (p) {
                     string nid = "n" + to_string(p->fila) + "_" + to_string(p->col);
-                    dot << "  " << prev << " -- " << nid
-                        << " [color=\"#fab387\" penwidth=1.8"
-                        << " label=\"↓\" fontcolor=\"#fab387\" fontsize=10];\n";
+                    dot << "  " << prev << " -- " << nid << " [color=gray style=dashed];\n";
                     prev = nid;
                     p = p->sigCol;
                 }
                 cc = cc->sig;
             }
         }
- 
+
         dot << "}\n";
         dot.close();
- 
+
         // Usar neato -n para respetar posiciones fijas
         string cmd = "neato -Tpng -n \"" + dotPath + "\" -o \"" + pngPath + "\"";
         system(cmd.c_str());
         cout << "[OK] Estructura capa " << idCapa << " -> " << pngPath << endl;
     }
- 
+
     // Generar imagen visual PNG de la capa
     void generarImagenPNG(const string& sufijo) const {
         int minF, maxF, minC, maxC;
         bounds(minF, maxF, minC, maxC);
         if (minF == INT_MAX) { cout << "Capa " << idCapa << " vacia." << endl; return; }
- 
+
         string dotPath = "graficas/img_" + sufijo + ".dot";
         string pngPath = "graficas/img_" + sufijo + ".png";
         ofstream dot(dotPath.c_str());
- 
+
         int CELL = 40; // tamaño px por celda
         int rows = maxF - minF + 1;
         int ccols = maxC - minC + 1;
         (void)rows; (void)ccols;
- 
+
         dot << "graph G {\n";
         dot << "  graph [bgcolor=white];\n";
         dot << "  node  [shape=box width=" << (CELL/72.0) << " height=" << (CELL/72.0)
             << " style=filled margin=0 label=\"\"];\n";
- 
+
         for (int f = minF; f <= maxF; f++) {
             for (int c = minC; c <= maxC; c++) {
                 string col = getColor(f, c);
@@ -358,13 +346,13 @@ public:
         }
         dot << "}\n";
         dot.close();
- 
+
         string cmd = "neato -Tpng -n \"" + dotPath + "\" -o \"" + pngPath + "\"";
         system(cmd.c_str());
         cout << "[OK] Imagen capa " << idCapa << " -> " << pngPath << endl;
     }
 };
- 
+
 // ============================================================
 // ÁRBOL BINARIO DE BÚSQUEDA DE CAPAS
 // ============================================================
@@ -377,33 +365,33 @@ struct NodoCapa {
         matriz = new MatrizDispersa(id);
     }
 };
- 
+
 class ArbolCapas {
 public:
     NodoCapa* raiz;
     ArbolCapas() : raiz(nullptr) {}
- 
+
     NodoCapa* insertar(NodoCapa* nodo, int id) {
         if (!nodo) return new NodoCapa(id);
         if (id < nodo->id) nodo->izq = insertar(nodo->izq, id);
         else if (id > nodo->id) nodo->der = insertar(nodo->der, id);
         return nodo;
     }
- 
+
     NodoCapa* insertar(int id) {
         raiz = insertar(raiz, id);
         return buscar(id);
     }
- 
+
     NodoCapa* buscar(NodoCapa* nodo, int id) const {
         if (!nodo) return nullptr;
         if (id == nodo->id) return nodo;
         if (id < nodo->id) return buscar(nodo->izq, id);
         return buscar(nodo->der, id);
     }
- 
+
     NodoCapa* buscar(int id) const { return buscar(raiz, id); }
- 
+
     // Inorden -> vector
     void inorden(NodoCapa* n, vector<NodoCapa*>& v) const {
         if (!n) return;
@@ -425,47 +413,43 @@ public:
         postorden(n->der, v);
         v.push_back(n);
     }
- 
+
     vector<NodoCapa*> recorridoInorden()   const { vector<NodoCapa*> v; inorden(raiz, v);    return v; }
     vector<NodoCapa*> recorridoPreorden()  const { vector<NodoCapa*> v; preorden(raiz, v);   return v; }
     vector<NodoCapa*> recorridoPostorden() const { vector<NodoCapa*> v; postorden(raiz, v);  return v; }
- 
-    // Graficar ABB - estilo mejorado
+
+    // Graficar ABB - blanco, minimalista
     void graficarDot(NodoCapa* n, ofstream& dot) const {
         if (!n) return;
-        string fill = "#45475a", border = "#89b4fa";
         dot << "  c" << n->id
-            << " [label=\"capa " << n->id << "\""
-            << " shape=box style=\"filled,rounded\""
-            << " fillcolor=\"" << fill << "\" fontcolor=\"#cdd6f4\""
-            << " color=\"" << border << "\" penwidth=2];\n";
+            << " [label=\"Capa " << n->id << "\""
+            << " shape=box style=filled fillcolor=white"
+            << " fontcolor=black color=black penwidth=1.2];\n";
         if (n->izq) {
             dot << "  c" << n->id << " -> c" << n->izq->id
-                << " [label=\"izq\" color=\"#a6e3a1\" fontcolor=\"#a6e3a1\""
-                << " penwidth=1.8 fontsize=10];\n";
+                << " [label=\"izq\" color=black fontcolor=black fontsize=10];\n";
             graficarDot(n->izq, dot);
         }
         if (n->der) {
             dot << "  c" << n->id << " -> c" << n->der->id
-                << " [label=\"der\" color=\"#f38ba8\" fontcolor=\"#f38ba8\""
-                << " penwidth=1.8 fontsize=10];\n";
+                << " [label=\"der\" color=black fontcolor=black fontsize=10];\n";
             graficarDot(n->der, dot);
         }
     }
- 
+
     void graficar() const {
         string dotPath = "graficas/abb_capas.dot";
         string pngPath = "graficas/abb_capas.png";
         ofstream dot(dotPath.c_str());
         dot << "digraph ABBCapas {\n";
-        dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6\n";
-        dot << "         label=\"Arbol Binario de Busqueda  |  Capas\"\n";
-        dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
-        dot << "  node [fontname=\"Helvetica\" fontsize=12];\n";
-        dot << "  edge [fontname=\"Helvetica\" fontsize=10];\n\n";
+        dot << "  graph [bgcolor=white pad=0.4\n";
+        dot << "         label=\"Arbol de Capas\"\n";
+        dot << "         labelloc=t fontsize=16 fontcolor=black fontname=Helvetica];\n";
+        dot << "  node  [fontname=Helvetica fontsize=12];\n";
+        dot << "  edge  [fontname=Helvetica fontsize=10 color=black];\n\n";
         if (!raiz) {
-            dot << "  vacio [label=\"(vacío)\" shape=ellipse style=filled"
-                << " fillcolor=\"#313244\" fontcolor=\"#6c7086\"];\n";
+            dot << "  vacio [label=\"(vacio)\" shape=ellipse"
+                << " style=filled fillcolor=lightgray fontcolor=black];\n";
         } else {
             graficarDot(raiz, dot);
         }
@@ -475,7 +459,7 @@ public:
         cout << "[OK] ABB de capas -> " << pngPath << endl;
     }
 };
- 
+
 // ============================================================
 // LISTA DE CAPAS DE UNA IMAGEN (lista simple enlazada, puntero al nodo del árbol)
 // ============================================================
@@ -484,11 +468,11 @@ struct NodoListaCapa {
     NodoListaCapa* sig;
     NodoListaCapa(NodoCapa* r) : ref(r), sig(nullptr) {}
 };
- 
+
 struct ListaCapasImg {
     NodoListaCapa* cabeza;
     ListaCapasImg() : cabeza(nullptr) {}
- 
+
     void agregar(NodoCapa* ref) {
         NodoListaCapa* nuevo = new NodoListaCapa(ref);
         if (!cabeza) { cabeza = nuevo; return; }
@@ -496,7 +480,7 @@ struct ListaCapasImg {
         while (p->sig) p = p->sig;
         p->sig = nuevo;
     }
- 
+
     vector<NodoCapa*> aVector() const {
         vector<NodoCapa*> v;
         NodoListaCapa* p = cabeza;
@@ -504,7 +488,7 @@ struct ListaCapasImg {
         return v;
     }
 };
- 
+
 // ============================================================
 // LISTA CIRCULAR DOBLEMENTE ENLAZADA DE IMÁGENES
 // ============================================================
@@ -515,27 +499,27 @@ struct NodoImagen {
     NodoImagen* sig;
     NodoImagen(int id) : id(id), ant(nullptr), sig(nullptr) {}
 };
- 
+
 class ListaCircularImagenes {
 public:
     NodoImagen* cabeza;
     int tam;
     ListaCircularImagenes() : cabeza(nullptr), tam(0) {}
- 
+
     bool existeId(int id) const {
         if (!cabeza) return false;
         NodoImagen* p = cabeza;
         do { if (p->id == id) return true; p = p->sig; } while (p != cabeza);
         return false;
     }
- 
+
     NodoImagen* buscar(int id) const {
         if (!cabeza) return nullptr;
         NodoImagen* p = cabeza;
         do { if (p->id == id) return p; p = p->sig; } while (p != cabeza);
         return nullptr;
     }
- 
+
     // Insertar ordenado por id
     NodoImagen* insertar(int id) {
         if (existeId(id)) { cout << "[!] Imagen " << id << " ya existe." << endl; return buscar(id); }
@@ -553,18 +537,18 @@ public:
             if (p->id > nuevo->id) break;
             p = p->sig;
         } while (p != cabeza);
- 
+
         // Insertar antes de p
         NodoImagen* prev = p->ant;
         prev->sig = nuevo;
         nuevo->ant = prev;
         nuevo->sig = p;
         p->ant = nuevo;
- 
+
         if (p == cabeza && nuevo->id < cabeza->id) cabeza = nuevo;
         return nuevo;
     }
- 
+
     bool eliminar(int id) {
         NodoImagen* n = buscar(id);
         if (!n) return false;
@@ -579,81 +563,58 @@ public:
         delete n;
         return true;
     }
- 
+
     void graficar() const {
         string dotPath = "graficas/lista_imagenes.dot";
         string pngPath = "graficas/lista_imagenes.png";
         ofstream dot(dotPath.c_str());
         dot << "digraph ListaImagenes {\n";
-        dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6 rankdir=LR\n";
-        dot << "         label=\"Lista Circular Doblemente Enlazada  |  Imagenes\"\n";
-        dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
-        dot << "  node [fontname=\"Helvetica\" fontsize=11];\n";
-        dot << "  edge [fontname=\"Helvetica\" fontsize=9];\n\n";
- 
+        dot << "  graph [bgcolor=white pad=0.4 rankdir=LR\n";
+        dot << "         label=\"Lista Circular de Imagenes\"\n";
+        dot << "         labelloc=t fontsize=16 fontcolor=black fontname=Helvetica];\n";
+        dot << "  node  [fontname=Helvetica fontsize=11];\n";
+        dot << "  edge  [fontname=Helvetica fontsize=9 color=black];\n\n";
+
         if (!cabeza) {
-            dot << "  vacio [label=\"(lista vacia)\" shape=ellipse style=filled"
-                << " fillcolor=\"#313244\" fontcolor=\"#6c7086\"];\n";
+            dot << "  vacio [label=\"(lista vacia)\" shape=ellipse"
+                << " style=filled fillcolor=lightgray fontcolor=black];\n";
             dot << "}\n"; dot.close(); correrDot(dotPath, pngPath); return;
         }
- 
-        // Nodos imagen
+
+        // Un nodo por imagen, formato record con sus capas adentro
         NodoImagen* p = cabeza;
         do {
-            dot << "  img" << p->id
-                << " [label=\"{ Imagen " << p->id << " | capas: ";
+            dot << "  img" << p->id << " [shape=record style=filled fillcolor=white"
+                << " color=black penwidth=1.2"
+                << " label=\"{Imagen " << p->id << " | Capas: ";
             NodoListaCapa* c = p->capas.cabeza;
             if (!c) dot << "ninguna";
-            while (c) { dot << c->ref->id; if (c->sig) dot << " → "; c = c->sig; }
-            dot << " }\" shape=record style=filled"
-                << " fillcolor=\"#313244\" fontcolor=\"#cdd6f4\""
-                << " color=\"#cba6f7\" penwidth=2];\n";
+            while (c) {
+                dot << c->ref->id;
+                if (c->sig) dot << ", ";
+                c = c->sig;
+            }
+            dot << "}\"];\n";
             p = p->sig;
         } while (p != cabeza);
- 
-        // Flechas sig (verde) y ant (azul punteado)
+
+        // Flechas sig (solidas) y ant (punteadas, debajo)
         p = cabeza;
         do {
             dot << "  img" << p->id << " -> img" << p->sig->id
-                << " [label=\"sig\" color=\"#a6e3a1\" fontcolor=\"#a6e3a1\" penwidth=1.8];\n";
+                << " [label=\"sig\" color=black];\n";
             dot << "  img" << p->id << " -> img" << p->ant->id
-                << " [label=\"ant\" color=\"#89b4fa\" fontcolor=\"#89b4fa\""
-                << " style=dashed penwidth=1.5];\n";
- 
-            // Sublista de capas con referencias al ABB
-            NodoListaCapa* c = p->capas.cabeza;
-            int i = 0;
-            while (c) {
-                string nid = "img" + to_string(p->id) + "_c" + to_string(i);
-                dot << "  " << nid
-                    << " [label=\"capa " << c->ref->id << "\""
-                    << " shape=ellipse style=filled"
-                    << " fillcolor=\"#45475a\" fontcolor=\"#f9e2af\""
-                    << " color=\"#f9e2af\" penwidth=1.5];\n";
-                if (i == 0)
-                    dot << "  img" << p->id << " -> " << nid
-                        << " [color=\"#f9e2af\" label=\"capas\" fontcolor=\"#f9e2af\"];\n";
-                else {
-                    string prev = "img" + to_string(p->id) + "_c" + to_string(i-1);
-                    dot << "  " << prev << " -> " << nid
-                        << " [color=\"#f9e2af\" arrowsize=0.7];\n";
-                }
-                // Referencia al nodo ABB
-                dot << "  " << nid << " -> c" << c->ref->id
-                    << " [style=dashed color=\"#f38ba8\" label=\"ref\""
-                    << " fontcolor=\"#f38ba8\" fontsize=8];\n";
-                c = c->sig; i++;
-            }
+                << " [label=\"ant\" color=gray style=dashed];\n";
             p = p->sig;
         } while (p != cabeza);
- 
+
         dot << "}\n";
         dot.close();
         correrDot(dotPath, pngPath);
         cout << "[OK] Lista de imagenes -> " << pngPath << endl;
     }
 };
- 
+
 // ============================================================
 // ÁRBOL BINARIO DE BÚSQUEDA DE USUARIOS
 // ============================================================
@@ -662,14 +623,14 @@ struct NodoListaImg {
     NodoListaImg* sig;
     NodoListaImg(int id) : idImagen(id), sig(nullptr) {}
 };
- 
+
 struct NodoUsuario {
     string nombre;
     NodoListaImg* listaImagenes; // lista simple de ids de imagen
     NodoUsuario* izq;
     NodoUsuario* der;
     NodoUsuario(const string& n) : nombre(n), listaImagenes(nullptr), izq(nullptr), der(nullptr) {}
- 
+
     void agregarImagen(int id) {
         NodoListaImg* nuevo = new NodoListaImg(id);
         if (!listaImagenes) { listaImagenes = nuevo; return; }
@@ -677,13 +638,13 @@ struct NodoUsuario {
         while (p->sig) p = p->sig;
         p->sig = nuevo;
     }
- 
+
     bool tieneImagen(int id) const {
         NodoListaImg* p = listaImagenes;
         while (p) { if (p->idImagen == id) return true; p = p->sig; }
         return false;
     }
- 
+
     void eliminarImagen(int id) {
         NodoListaImg* p = listaImagenes, *prev = nullptr;
         while (p) {
@@ -695,38 +656,38 @@ struct NodoUsuario {
         }
     }
 };
- 
+
 class ArbolUsuarios {
 public:
     NodoUsuario* raiz;
     ArbolUsuarios() : raiz(nullptr) {}
- 
+
     NodoUsuario* insertar(NodoUsuario* n, const string& nombre) {
         if (!n) return new NodoUsuario(nombre);
         if (nombre < n->nombre) n->izq = insertar(n->izq, nombre);
         else if (nombre > n->nombre) n->der = insertar(n->der, nombre);
         return n;
     }
- 
+
     NodoUsuario* insertar(const string& nombre) {
         raiz = insertar(raiz, nombre);
         return buscar(nombre);
     }
- 
+
     NodoUsuario* buscar(NodoUsuario* n, const string& nombre) const {
         if (!n) return nullptr;
         if (nombre == n->nombre) return n;
         if (nombre < n->nombre) return buscar(n->izq, nombre);
         return buscar(n->der, nombre);
     }
- 
+
     NodoUsuario* buscar(const string& nombre) const { return buscar(raiz, nombre); }
- 
+
     NodoUsuario* minimo(NodoUsuario* n) const {
         while (n->izq) n = n->izq;
         return n;
     }
- 
+
     NodoUsuario* eliminar(NodoUsuario* n, const string& nombre) {
         if (!n) return nullptr;
         if (nombre < n->nombre) n->izq = eliminar(n->izq, nombre);
@@ -742,49 +703,48 @@ public:
         }
         return n;
     }
- 
+
     bool eliminar(const string& nombre) {
         if (!buscar(nombre)) return false;
         raiz = eliminar(raiz, nombre);
         return true;
     }
- 
+
     void graficarDot(NodoUsuario* n, ofstream& dot) const {
         if (!n) return;
         dot << "  u_" << n->nombre
-            << " [label=\"{ " << n->nombre << " | imgs: ";
+            << " [shape=record style=filled fillcolor=white"
+            << " color=black penwidth=1.2"
+            << " label=\"{" << n->nombre << " | Imagenes: ";
         NodoListaImg* p = n->listaImagenes;
         if (!p) dot << "ninguna";
-        while (p) { dot << p->idImagen; if (p->sig) dot << "→"; p = p->sig; }
-        dot << " }\" shape=record style=filled"
-            << " fillcolor=\"#313244\" fontcolor=\"#cdd6f4\""
-            << " color=\"#89dceb\" penwidth=2];\n";
- 
+        while (p) { dot << p->idImagen; if (p->sig) dot << ", "; p = p->sig; }
+        dot << "}\"];\n";
         if (n->izq) {
             dot << "  u_" << n->nombre << " -> u_" << n->izq->nombre
-                << " [label=\"izq\" color=\"#a6e3a1\" fontcolor=\"#a6e3a1\" penwidth=1.8 fontsize=10];\n";
+                << " [label=\"izq\" color=black fontcolor=black fontsize=10];\n";
             graficarDot(n->izq, dot);
         }
         if (n->der) {
             dot << "  u_" << n->nombre << " -> u_" << n->der->nombre
-                << " [label=\"der\" color=\"#f38ba8\" fontcolor=\"#f38ba8\" penwidth=1.8 fontsize=10];\n";
+                << " [label=\"der\" color=black fontcolor=black fontsize=10];\n";
             graficarDot(n->der, dot);
         }
     }
- 
+
     void graficar() const {
         string dotPath = "graficas/abb_usuarios.dot";
         string pngPath = "graficas/abb_usuarios.png";
         ofstream dot(dotPath.c_str());
         dot << "digraph ABBUsuarios {\n";
-        dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6\n";
-        dot << "         label=\"Arbol Binario de Busqueda  |  Usuarios\"\n";
-        dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
-        dot << "  node [fontname=\"Helvetica\" fontsize=12];\n";
-        dot << "  edge [fontname=\"Helvetica\" fontsize=10];\n\n";
+        dot << "  graph [bgcolor=white pad=0.4\n";
+        dot << "         label=\"Arbol de Usuarios\"\n";
+        dot << "         labelloc=t fontsize=16 fontcolor=black fontname=Helvetica];\n";
+        dot << "  node  [fontname=Helvetica fontsize=12];\n";
+        dot << "  edge  [fontname=Helvetica fontsize=10 color=black];\n\n";
         if (!raiz) {
-            dot << "  vacio [label=\"(vacío)\" shape=ellipse style=filled"
-                << " fillcolor=\"#313244\" fontcolor=\"#6c7086\"];\n";
+            dot << "  vacio [label=\"(vacio)\" shape=ellipse"
+                << " style=filled fillcolor=lightgray fontcolor=black];\n";
         } else {
             graficarDot(raiz, dot);
         }
@@ -794,15 +754,15 @@ public:
         cout << "[OK] ABB de usuarios -> " << pngPath << endl;
     }
 };
- 
+
 // ============================================================
 // GENERACIÓN DE IMÁGENES COMPUESTAS (superponer capas)
 // ============================================================
- 
+
 // Combina N capas y genera una imagen PNG
 void generarImagenCompuesta(const vector<NodoCapa*>& capas, const string& sufijo) {
     if (capas.empty()) { cout << "[!] Sin capas para generar imagen." << endl; return; }
- 
+
     // Encontrar dimensiones globales
     int minF = INT_MAX, maxF = INT_MIN, minC = INT_MAX, maxC = INT_MIN;
     for (auto* c : capas) {
@@ -814,7 +774,7 @@ void generarImagenCompuesta(const vector<NodoCapa*>& capas, const string& sufijo
         if (c2 > maxC) maxC = c2;
     }
     if (minF == INT_MAX) { cout << "[!] Todas las capas están vacías." << endl; return; }
- 
+
     int CELL = 40;
     string dotPath = "graficas/" + sufijo + ".dot";
     string pngPath = "graficas/" + sufijo + ".png";
@@ -822,7 +782,7 @@ void generarImagenCompuesta(const vector<NodoCapa*>& capas, const string& sufijo
     dot << "graph G {\n  graph [bgcolor=white];\n";
     dot << "  node [shape=box width=" << (CELL/72.0) << " height=" << (CELL/72.0)
         << " style=filled margin=0 label=\"\"];\n";
- 
+
     for (int f = minF; f <= maxF; f++) {
         for (int c = minC; c <= maxC; c++) {
             string color = "#FFFFFF";
@@ -838,85 +798,77 @@ void generarImagenCompuesta(const vector<NodoCapa*>& capas, const string& sufijo
     }
     dot << "}\n";
     dot.close();
- 
+
     string cmd = "neato -Tpng -n \"" + dotPath + "\" -o \"" + pngPath + "\"";
     system(cmd.c_str());
     cout << "[OK] Imagen generada: " << pngPath << endl;
 }
- 
+
 // Graficar imagen + árbol de capas con enlace (ilustración 7) - estilo mejorado
 void graficarImagenYArbol(NodoImagen* img, const ArbolCapas& arbol) {
     string sufijo = "img_arbol_" + to_string(img->id);
     string dotPath = "graficas/" + sufijo + ".dot";
     string pngPath = "graficas/" + sufijo + ".png";
     ofstream dot(dotPath.c_str());
- 
+
     dot << "digraph ImgArbol" << img->id << " {\n";
-    dot << "  graph [bgcolor=\"#1e1e2e\" pad=0.6\n";
-    dot << "         label=\"Imagen " << img->id << "  |  Lista de Capas y ABB\"\n";
-    dot << "         labelloc=t fontsize=20 fontcolor=\"#cdd6f4\" fontname=\"Helvetica-Bold\"];\n";
-    dot << "  node [fontname=\"Helvetica\" fontsize=11];\n";
-    dot << "  edge [fontname=\"Helvetica\" fontsize=9];\n\n";
- 
+    dot << "  graph [bgcolor=white pad=0.4\n";
+    dot << "         label=\"Imagen " << img->id << " - Lista de capas y arbol\"\n";
+    dot << "         labelloc=t fontsize=16 fontcolor=black fontname=Helvetica];\n";
+    dot << "  node  [fontname=Helvetica fontsize=11];\n";
+    dot << "  edge  [fontname=Helvetica fontsize=9 color=black];\n\n";
+
     // Nodo imagen
     dot << "  img" << img->id
         << " [label=\"Imagen " << img->id << "\""
-        << " shape=box style=\"filled,rounded\""
-        << " fillcolor=\"#40a02b\" fontcolor=\"white\""
-        << " color=\"#a6e3a1\" penwidth=2];\n\n";
- 
-    // Lista de capas
+        << " shape=box style=filled fillcolor=lightgray"
+        << " fontcolor=black color=black penwidth=1.2];\n\n";
+
+    // Lista de capas (nodos en linea)
     NodoListaCapa* p = img->capas.cabeza;
     int i = 0;
     while (p) {
         string nid = "lc" + to_string(i);
         dot << "  " << nid
-            << " [label=\"capa " << p->ref->id << "\""
-            << " shape=ellipse style=filled"
-            << " fillcolor=\"#45475a\" fontcolor=\"#f9e2af\""
-            << " color=\"#f9e2af\" penwidth=1.5];\n";
+            << " [label=\"Capa " << p->ref->id << "\""
+            << " shape=box style=filled fillcolor=white"
+            << " color=black penwidth=1];\n";
         if (i == 0)
-            dot << "  img" << img->id << " -> lc0"
-                << " [color=\"#f9e2af\" label=\"lista capas\" fontcolor=\"#f9e2af\" penwidth=2];\n";
-        else {
-            string prev = "lc" + to_string(i-1);
-            dot << "  " << prev << " -> " << nid
-                << " [color=\"#f9e2af\" arrowsize=0.8];\n";
-        }
-        // Referencia al ABB
+            dot << "  img" << img->id << " -> lc0 [color=black];\n";
+        else
+            dot << "  lc" << (i-1) << " -> " << nid << " [color=black];\n";
+        // Referencia punteada al nodo del arbol
         dot << "  " << nid << " -> c" << p->ref->id
-            << " [style=dashed color=\"#f38ba8\" label=\"ref\""
-            << " fontcolor=\"#f38ba8\" penwidth=1.5];\n";
+            << " [style=dashed color=gray label=\"ref\" fontcolor=gray];\n";
         p = p->sig; i++;
     }
- 
+
     // ABB completo
     function<void(NodoCapa*)> dotArbol = [&](NodoCapa* n) {
         if (!n) return;
         dot << "  c" << n->id
-            << " [label=\"capa " << n->id << "\""
-            << " shape=box style=\"filled,rounded\""
-            << " fillcolor=\"#313244\" fontcolor=\"#cdd6f4\""
-            << " color=\"#89b4fa\" penwidth=2];\n";
+            << " [label=\"Capa " << n->id << "\""
+            << " shape=box style=filled fillcolor=white"
+            << " color=black penwidth=1.2];\n";
         if (n->izq) {
             dot << "  c" << n->id << " -> c" << n->izq->id
-                << " [label=\"izq\" color=\"#a6e3a1\" fontcolor=\"#a6e3a1\" penwidth=1.5];\n";
+                << " [label=\"izq\" color=black fontsize=9];\n";
             dotArbol(n->izq);
         }
         if (n->der) {
             dot << "  c" << n->id << " -> c" << n->der->id
-                << " [label=\"der\" color=\"#f38ba8\" fontcolor=\"#f38ba8\" penwidth=1.5];\n";
+                << " [label=\"der\" color=black fontsize=9];\n";
             dotArbol(n->der);
         }
     };
     dotArbol(arbol.raiz);
- 
+
     dot << "}\n";
     dot.close();
     correrDot(dotPath, pngPath);
-    cout << "[OK] Imagen+Arbol -> " << pngPath << endl;
+    cout << "[OK] Imagen + Arbol -> " << pngPath << endl;
 }
- 
+
 // ============================================================
 // CARGA MASIVA
 // ============================================================
@@ -927,21 +879,21 @@ void cargaMasivaCapas(const string& archivo, ArbolCapas& arbol) {
     int cnt = 0;
     string bloque = "";
     int idActual = -1;
- 
+
     while (getline(f, linea)) {
         linea = trim(linea);
         if (linea.empty()) continue;
- 
+
         // Detectar inicio de capa: "id {"
         if (linea.find('{') != string::npos) {
             // Puede ser "id {" en la misma linea
             size_t pos = linea.find('{');
             string sId = trim(linea.substr(0, pos));
             try { idActual = stoi(sId); } catch(...) { continue; }
- 
+
             NodoCapa* capa = arbol.insertar(idActual);
             if (!capa) continue;
- 
+
             // Acumular el resto de la línea hasta '}'
             string resto = linea.substr(pos + 1);
             // Procesar píxeles inline o en múltiples líneas
@@ -987,7 +939,7 @@ void cargaMasivaCapas(const string& archivo, ArbolCapas& arbol) {
     }
     cout << cnt << " capas cargadas exitosamente." << endl;
 }
- 
+
 void cargaMasivaImagenes(const string& archivo, ListaCircularImagenes& lista, ArbolCapas& arbol) {
     ifstream f(archivo.c_str());
     if (!f.is_open()) { cout << "[!] No se pudo abrir: " << archivo << endl; return; }
@@ -1021,7 +973,7 @@ void cargaMasivaImagenes(const string& archivo, ListaCircularImagenes& lista, Ar
     }
     cout << cnt << " imágenes cargadas exitosamente." << endl;
 }
- 
+
 void cargaMasivaUsuarios(const string& archivo, ArbolUsuarios& arbolU, ListaCircularImagenes& listaImg) {
     ifstream f(archivo.c_str());
     if (!f.is_open()) { cout << "[!] No se pudo abrir: " << archivo << endl; return; }
@@ -1054,7 +1006,7 @@ void cargaMasivaUsuarios(const string& archivo, ArbolUsuarios& arbolU, ListaCirc
     }
     cout << cnt << " usuarios cargados exitosamente." << endl;
 }
- 
+
 // ============================================================
 // ARCHIVOS DE EJEMPLO
 // ============================================================
@@ -1079,7 +1031,7 @@ void crearArchivoEjemplo() {
     cap << "1,4,#FF6600;\n1,5,#FF6600;\n2,4,#FF6600;\n2,5,#FF6600;\n";
     cap << "}\n";
     cap.close();
- 
+
     // imágenes
     ofstream im("datos/imagenes.im");
     im << "1{2,3,4}\n";
@@ -1088,7 +1040,7 @@ void crearArchivoEjemplo() {
     im << "4{1,2,3,4,5}\n";
     im << "5{3,5}\n";
     im.close();
- 
+
     // usuarios
     ofstream usr("datos/usuarios.usr");
     usr << "userM:;\n";
@@ -1097,10 +1049,10 @@ void crearArchivoEjemplo() {
     usr << "userY:4,5;\n";
     usr << "userZ:3;\n";
     usr.close();
- 
+
     cout << "[OK] Archivos de ejemplo creados en datos/." << endl;
 }
- 
+
 // ============================================================
 // MENÚS
 // ============================================================
@@ -1109,7 +1061,7 @@ void pausar() {
     cin.ignore();
     cin.get();
 }
- 
+
 void menuGeneracion(ArbolCapas& arbol, ListaCircularImagenes& listaImg) {
     int op;
     do {
@@ -1122,21 +1074,21 @@ void menuGeneracion(ArbolCapas& arbol, ListaCircularImagenes& listaImg) {
         cout << "[4] Por usuario\n";
         cout << "[0] Volver\n";
         cout << "Opcion: "; cin >> op;
- 
+
         if (op == 1) {
             int numCapas, tipoRec;
             cout << "Numero de capas: "; cin >> numCapas;
             cout << "Recorrido: [1]Inorden [2]Preorden [3]Postorden\nOpcion: "; cin >> tipoRec;
- 
+
             vector<NodoCapa*> todas;
             if (tipoRec == 1) todas = arbol.recorridoInorden();
             else if (tipoRec == 2) todas = arbol.recorridoPreorden();
             else todas = arbol.recorridoPostorden();
- 
+
             if ((int)todas.size() < numCapas) numCapas = (int)todas.size();
             vector<NodoCapa*> sel(todas.begin(), todas.begin() + numCapas);
             generarImagenCompuesta(sel, "gen_recorrido");
- 
+
         } else if (op == 2) {
             int idImg;
             cout << "ID de imagen: "; cin >> idImg;
@@ -1146,7 +1098,7 @@ void menuGeneracion(ArbolCapas& arbol, ListaCircularImagenes& listaImg) {
                 vector<NodoCapa*> capas = img->capas.aVector();
                 generarImagenCompuesta(capas, "gen_img_" + to_string(idImg));
             }
- 
+
         } else if (op == 3) {
             int idCapa;
             cout << "ID de capa: "; cin >> idCapa;
@@ -1156,7 +1108,7 @@ void menuGeneracion(ArbolCapas& arbol, ListaCircularImagenes& listaImg) {
                 c->matriz->generarImagenPNG("capa_" + to_string(idCapa));
                 c->matriz->graficarEstructura(to_string(idCapa));
             }
- 
+
         } else if (op == 4) {
             string nombre;
             cout << "Nombre de usuario: "; cin >> nombre;
@@ -1166,7 +1118,7 @@ void menuGeneracion(ArbolCapas& arbol, ListaCircularImagenes& listaImg) {
         }
     } while (op != 0);
 }
- 
+
 void menuUsuarios(ArbolUsuarios& arbolU, ListaCircularImagenes& listaImg, ArbolCapas& arbolC) {
     int op;
     do {
@@ -1179,19 +1131,19 @@ void menuUsuarios(ArbolUsuarios& arbolU, ListaCircularImagenes& listaImg, ArbolC
         cout << "[4] Generar imagen de usuario\n";
         cout << "[0] Volver\n";
         cout << "Opcion: "; cin >> op;
- 
+
         if (op == 1) {
             string nombre;
             cout << "Nombre: "; cin >> nombre;
             if (arbolU.buscar(nombre)) cout << "[!] Usuario ya existe." << endl;
             else { arbolU.insertar(nombre); cout << "[OK] Usuario " << nombre << " agregado." << endl; }
- 
+
         } else if (op == 2) {
             string nombre;
             cout << "Nombre: "; cin >> nombre;
             if (arbolU.eliminar(nombre)) cout << "[OK] Usuario eliminado." << endl;
             else cout << "[!] Usuario no encontrado." << endl;
- 
+
         } else if (op == 3) {
             string nombre;
             cout << "Nombre actual: "; cin >> nombre;
@@ -1209,7 +1161,7 @@ void menuUsuarios(ArbolUsuarios& arbolU, ListaCircularImagenes& listaImg, ArbolC
                 u->eliminarImagen(idImg);
                 cout << "[OK] Imagen eliminada del usuario." << endl;
             }
- 
+
         } else if (op == 4) {
             string nombre;
             cout << "Nombre: "; cin >> nombre;
@@ -1229,7 +1181,7 @@ void menuUsuarios(ArbolUsuarios& arbolU, ListaCircularImagenes& listaImg, ArbolC
         }
     } while (op != 0);
 }
- 
+
 void menuImagenes(ListaCircularImagenes& listaImg, ArbolCapas& arbolC, ArbolUsuarios& arbolU) {
     int op;
     do {
@@ -1240,7 +1192,7 @@ void menuImagenes(ListaCircularImagenes& listaImg, ArbolCapas& arbolC, ArbolUsua
         cout << "[2] Eliminar imagen\n";
         cout << "[0] Volver\n";
         cout << "Opcion: "; cin >> op;
- 
+
         if (op == 1) {
             int idImg; cout << "ID imagen: "; cin >> idImg;
             if (listaImg.existeId(idImg)) { cout << "[!] ID ya existe." << endl; continue; }
@@ -1257,7 +1209,7 @@ void menuImagenes(ListaCircularImagenes& listaImg, ArbolCapas& arbolC, ArbolUsua
                 else cout << "[!] Capa no encontrada." << endl;
             }
             cout << "[OK] Imagen " << idImg << " creada." << endl;
- 
+
         } else if (op == 2) {
             int idImg; cout << "ID imagen: "; cin >> idImg;
             // Eliminar de lista de usuarios
@@ -1274,7 +1226,7 @@ void menuImagenes(ListaCircularImagenes& listaImg, ArbolCapas& arbolC, ArbolUsua
         }
     } while (op != 0);
 }
- 
+
 void menuEstadoMemoria(ArbolCapas& arbolC, ListaCircularImagenes& listaImg, ArbolUsuarios& arbolU) {
     int op;
     do {
@@ -1288,7 +1240,7 @@ void menuEstadoMemoria(ArbolCapas& arbolC, ListaCircularImagenes& listaImg, Arbo
         cout << "[5] Ver arbol de usuarios\n";
         cout << "[0] Volver\n";
         cout << "Opcion: "; cin >> op;
- 
+
         if (op == 1) {
             listaImg.graficar();
         } else if (op == 2) {
@@ -1308,7 +1260,7 @@ void menuEstadoMemoria(ArbolCapas& arbolC, ListaCircularImagenes& listaImg, Arbo
         }
     } while (op != 0);
 }
- 
+
 // ============================================================
 // MAIN
 // ============================================================
@@ -1317,26 +1269,26 @@ int main() {
     SetConsoleOutputCP(65001);
     SetConsoleCP(65001);
 #endif
- 
+
     crearDirs();
- 
+
     // Verificar/crear archivos de ejemplo
     {
         ifstream t("datos/capas.cap");
         if (!t.good()) crearArchivoEjemplo();
     }
- 
+
     ArbolCapas          arbolCapas;
     ListaCircularImagenes listaImagenes;
     ArbolUsuarios       arbolUsuarios;
- 
+
     cout << "============================================\n";
     cout << "  Generador de Imagenes por Capas\n";
     cout << "  Estructura de Datos I 2026 - URL Xela\n";
     cout << "  Archivos de datos en: datos/\n";
     cout << "  Graficas generadas en: graficas/\n";
     cout << "============================================\n";
- 
+
     int opcion;
     do {
         cout << "\n========================================\n";
@@ -1350,7 +1302,7 @@ int main() {
         cout << "0. Salir\n";
         cout << "Opcion: ";
         cin >> opcion;
- 
+
         switch (opcion) {
             case 1: {
                 cout << "\n--- CARGA MASIVA ---\n";
@@ -1381,6 +1333,6 @@ int main() {
                 cout << "[!] Opcion invalida.\n";
         }
     } while (opcion != 0);
- 
+
     return 0;
 }

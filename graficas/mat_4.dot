@@ -1,0 +1,33 @@
+graph G {
+  graph [bgcolor="#1e1e2e" pad=0.5
+         label="Matriz Dispersa  |  Capa 4"
+         labelloc=t fontsize=22 fontcolor="#cdd6f4" fontname="Helvetica-Bold"];
+  node [fontname="Helvetica" fontsize=11 width=0.9 height=0.45 fixedsize=true];
+  edge [fontname="Helvetica" fontsize=9];
+
+  raiz [label="raiz" shape=ellipse style=filled fillcolor="#313244" fontcolor="#cdd6f4" color="#cdd6f4" penwidth=2 pos="-70,440!"];
+
+  hf2 [label="fila 2" shape=box style=filled fillcolor="#1e66f5" fontcolor="white" color="#89b4fa" penwidth=2 pos="20,230!"];
+  hf3 [label="fila 3" shape=box style=filled fillcolor="#1e66f5" fontcolor="white" color="#89b4fa" penwidth=2 pos="20,120!"];
+
+  hc2 [label="col 2" shape=box style=filled fillcolor="#df8e1d" fontcolor="white" color="#f9e2af" penwidth=2 pos="120,440!"];
+  hc3 [label="col 3" shape=box style=filled fillcolor="#df8e1d" fontcolor="white" color="#f9e2af" penwidth=2 pos="230,440!"];
+
+  n2_2 [label="(2,2)\n#8B4513" shape=box style="filled,rounded" fillcolor="#8B4513" fontcolor="#ffffff" color="#cdd6f4" penwidth=1.5 pos="120,230!"];
+  n2_3 [label="(2,3)\n#8B4513" shape=box style="filled,rounded" fillcolor="#8B4513" fontcolor="#ffffff" color="#cdd6f4" penwidth=1.5 pos="230,230!"];
+  n3_2 [label="(3,2)\n#8B4513" shape=box style="filled,rounded" fillcolor="#8B4513" fontcolor="#ffffff" color="#cdd6f4" penwidth=1.5 pos="120,120!"];
+  n3_3 [label="(3,3)\n#8B4513" shape=box style="filled,rounded" fillcolor="#8B4513" fontcolor="#ffffff" color="#cdd6f4" penwidth=1.5 pos="230,120!"];
+
+  raiz -- hf2 [color="#89b4fa" penwidth=2 label="filas" fontcolor="#89b4fa"];
+  raiz -- hc2 [color="#f9e2af" penwidth=2 label="cols" fontcolor="#f9e2af"];
+  hf2 -- hf3 [color="#89b4fa" style=dashed];
+  hc2 -- hc3 [color="#f9e2af" style=dashed];
+  hf2 -- n2_2 [color="#89b4fa" penwidth=1.8 label="→" fontcolor="#89b4fa" fontsize=10];
+  n2_2 -- n2_3 [color="#89b4fa" penwidth=1.8 label="→" fontcolor="#89b4fa" fontsize=10];
+  hf3 -- n3_2 [color="#89b4fa" penwidth=1.8 label="→" fontcolor="#89b4fa" fontsize=10];
+  n3_2 -- n3_3 [color="#89b4fa" penwidth=1.8 label="→" fontcolor="#89b4fa" fontsize=10];
+  hc2 -- n2_2 [color="#fab387" penwidth=1.8 label="↓" fontcolor="#fab387" fontsize=10];
+  n2_2 -- n3_2 [color="#fab387" penwidth=1.8 label="↓" fontcolor="#fab387" fontsize=10];
+  hc3 -- n2_3 [color="#fab387" penwidth=1.8 label="↓" fontcolor="#fab387" fontsize=10];
+  n2_3 -- n3_3 [color="#fab387" penwidth=1.8 label="↓" fontcolor="#fab387" fontsize=10];
+}

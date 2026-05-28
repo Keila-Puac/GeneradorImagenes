@@ -1,0 +1,24 @@
+graph G {
+  graph [bgcolor=white];
+  node [shape=box width=0.555556 height=0.555556 style=filled margin=0 label=""];
+  n2_2 [fillcolor="#8B4513" pos="0,160!"];
+  n2_3 [fillcolor="#FF0000" pos="40,160!"];
+  n2_4 [fillcolor="#FF0000" pos="80,160!"];
+  n2_5 [fillcolor="#FFFFFF" pos="120,160!"];
+  n3_2 [fillcolor="#FF0000" pos="0,120!"];
+  n3_3 [fillcolor="#FF0000" pos="40,120!"];
+  n3_4 [fillcolor="#FF0000" pos="80,120!"];
+  n3_5 [fillcolor="#FF0000" pos="120,120!"];
+  n4_2 [fillcolor="#FF0000" pos="0,80!"];
+  n4_3 [fillcolor="#FF0000" pos="40,80!"];
+  n4_4 [fillcolor="#FF0000" pos="80,80!"];
+  n4_5 [fillcolor="#FF0000" pos="120,80!"];
+  n5_2 [fillcolor="#FFFFFF" pos="0,40!"];
+  n5_3 [fillcolor="#FF0000" pos="40,40!"];
+  n5_4 [fillcolor="#FF0000" pos="80,40!"];
+  n5_5 [fillcolor="#FFFFFF" pos="120,40!"];
+  n6_2 [fillcolor="#FFFFFF" pos="0,0!"];
+  n6_3 [fillcolor="#FFFFFF" pos="40,0!"];
+  n6_4 [fillcolor="#FF0000" pos="80,0!"];
+  n6_5 [fillcolor="#FFFFFF" pos="120,0!"];
+}
