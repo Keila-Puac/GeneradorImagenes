@@ -1,0 +1,8 @@
+graph G {
+  graph [bgcolor=white];
+  node  [shape=box width=0.555556 height=0.555556 style=filled margin=0 label=""];
+  n0_0 [fillcolor="#0000FF" pos="0,40!"];
+  n0_1 [fillcolor="#0000FF" pos="40,40!"];
+  n1_0 [fillcolor="#0000FF" pos="0,0!"];
+  n1_1 [fillcolor="#0000FF" pos="40,0!"];
+}

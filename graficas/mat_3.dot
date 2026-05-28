@@ -1,0 +1,41 @@
+digraph Matriz3 {
+  graph [bgcolor="#1e1e2e" pad=0.6 splines=ortho rankdir=LR
+         label="Matriz Dispersa  |  Capa 3"
+         labelloc=t fontsize=20 fontcolor="#cdd6f4" fontname="Helvetica-Bold"];
+  node [fontname="Helvetica" fontsize=11];
+  edge [fontname="Helvetica" fontsize=9];
+
+  raiz [label="MATRIZ\nraiz" shape=ellipse style=filled
+        fillcolor="#313244" fontcolor="#cdd6f4" color="#89b4fa" penwidth=2];
+
+  subgraph cluster_filas {
+    label="Encab. Filas" fontcolor="#89dceb" color="#89dceb" style=dashed bgcolor="#181825";
+    hf0 [label="fila 0" shape=box style=filled fillcolor="#1e66f5" fontcolor="white" color="#89b4fa" penwidth=1.5];
+    hf1 [label="fila 1" shape=box style=filled fillcolor="#1e66f5" fontcolor="white" color="#89b4fa" penwidth=1.5];
+  }
+
+  subgraph cluster_cols {
+    label="Encab. Cols" fontcolor="#f9e2af" color="#f9e2af" style=dashed bgcolor="#181825";
+    hc0 [label="col 0" shape=box style=filled fillcolor="#df8e1d" fontcolor="white" color="#f9e2af" penwidth=1.5];
+    hc1 [label="col 1" shape=box style=filled fillcolor="#df8e1d" fontcolor="white" color="#f9e2af" penwidth=1.5];
+  }
+
+  // Nodos Pixel
+  n0_0 [label="(0,0)\n#0000FF" shape=box style="filled,rounded" fillcolor="#0000FF" fontcolor="#000000" color="#cdd6f4" penwidth=1.5];
+  n0_1 [label="(0,1)\n#0000FF" shape=box style="filled,rounded" fillcolor="#0000FF" fontcolor="#000000" color="#cdd6f4" penwidth=1.5];
+  n1_0 [label="(1,0)\n#0000FF" shape=box style="filled,rounded" fillcolor="#0000FF" fontcolor="#000000" color="#cdd6f4" penwidth=1.5];
+  n1_1 [label="(1,1)\n#0000FF" shape=box style="filled,rounded" fillcolor="#0000FF" fontcolor="#000000" color="#cdd6f4" penwidth=1.5];
+
+  raiz -> hf0 [color="#89b4fa" penwidth=2 label="  filas" fontcolor="#89b4fa"];
+  raiz -> hc0 [color="#f9e2af" penwidth=2 label="  cols" fontcolor="#f9e2af"];
+  hf0 -> hf1 [color="#89b4fa" style=dashed arrowsize=0.7];
+  hc0 -> hc1 [color="#f9e2af" style=dashed arrowsize=0.7];
+  hf0 -> n0_0 [color="#89b4fa" label="sigFila" fontcolor="#89b4fa" fontsize=8];
+  n0_0 -> n0_1 [color="#89b4fa" label="sigFila" fontcolor="#89b4fa" fontsize=8];
+  hf1 -> n1_0 [color="#89b4fa" label="sigFila" fontcolor="#89b4fa" fontsize=8];
+  n1_0 -> n1_1 [color="#89b4fa" label="sigFila" fontcolor="#89b4fa" fontsize=8];
+  hc0 -> n0_0 [color="#fab387" label="sigCol" fontcolor="#fab387" fontsize=8];
+  n0_0 -> n1_0 [color="#fab387" label="sigCol" fontcolor="#fab387" fontsize=8];
+  hc1 -> n0_1 [color="#fab387" label="sigCol" fontcolor="#fab387" fontsize=8];
+  n0_1 -> n1_1 [color="#fab387" label="sigCol" fontcolor="#fab387" fontsize=8];
+}
