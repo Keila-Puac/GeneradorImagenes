@@ -1284,9 +1284,6 @@ int main() {
 
     cout << "============================================\n";
     cout << "  Generador de Imagenes por Capas\n";
-    cout << "  Estructura de Datos I 2026 - URL Xela\n";
-    cout << "  Archivos de datos en: datos/\n";
-    cout << "  Graficas generadas en: graficas/\n";
     cout << "============================================\n";
 
     int opcion;
